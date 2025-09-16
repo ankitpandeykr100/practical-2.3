@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG Drawing Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 30px;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    button {
+      display: block;
+      margin: 0 auto 15px;
+      padding: 8px 16px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    svg {
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      width: 800px;
+      height: 500px;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>SVG Drawing Tool</h2>
+    <button id="toggleMode">Switch to Eraser</button>
+    <svg id="drawingArea" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <script>
+    const svg = document.getElementById("drawingArea");
+    const toggleBtn = document.getElementById("toggleMode");
+
+    let drawing = false;
+    let currentPath = null;
+    let mode = "pen"; // pen or eraser
+
+    toggleBtn.addEventListener("click", () => {
+      mode = mode === "pen" ? "eraser" : "pen";
+      toggleBtn.textContent = mode === "pen" ? "Switch to Eraser" : "Switch to Pen";
+      svg.style.cursor = mode === "pen" ? "crosshair" : "not-allowed";
+    });
+
+    svg.addEventListener("mousedown", (e) => {
+      if (mode === "pen") {
+        drawing = true;
+        const point = getMousePos(e);
+        currentPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        currentPath.setAttribute("stroke", "black");
+        currentPath.setAttribute("stroke-width", "2");
+        currentPath.setAttribute("fill", "none");
+        currentPath.setAttribute("d", `M ${point.x} ${point.y}`);
+        svg.appendChild(currentPath);
+      } else if (mode === "eraser" && e.target.tagName === "path") {
+        svg.removeChild(e.target);
+      }
+    });
+
+    svg.addEventListener("mousemove", (e) => {
+      if (drawing && mode === "pen" && currentPath) {
+        const point = getMousePos(e);
+        const d = currentPath.getAttribute("d");
+        currentPath.setAttribute("d", `${d} L ${point.x} ${point.y}`);
+      }
+    });
+
+    svg.addEventListener("mouseup", () => {
+      drawing = false;
+      currentPath = null;
+    });
+
+    function getMousePos(evt) {
+      const CTM = svg.getScreenCTM();
+      return {
+        x: (evt.clientX - CTM.e) / CTM.a,
+        y: (evt.clientY - CTM.f) / CTM.d
+      };
+    }
+  </script>
+</body>
+</html>
